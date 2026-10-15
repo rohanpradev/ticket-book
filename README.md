@@ -1,7 +1,7 @@
 # Rush
 
-[![Verify Rush](https://github.com/rohanpradev/rush/actions/workflows/ci.yml/badge.svg)](https://github.com/rohanpradev/rush/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/rohanpradev/rush/actions/workflows/codeql.yml/badge.svg)](https://github.com/rohanpradev/rush/actions/workflows/codeql.yml)
+[![Verify Rush](https://github.com/rohanpradev/ticket-book/actions/workflows/ci.yml/badge.svg)](https://github.com/rohanpradev/ticket-book/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/rohanpradev/ticket-book/actions/workflows/codeql.yml/badge.svg)](https://github.com/rohanpradev/ticket-book/actions/workflows/codeql.yml)
 
 **A ticket drop platform you can inspect under failure.**
 
