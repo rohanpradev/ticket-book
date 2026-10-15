@@ -1,0 +1,58 @@
+{
+  "name": "rush",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bunx --bun vp dev --host 127.0.0.1",
+    "dev:api": "bun --watch src/server/index.ts",
+    "worker": "bun src/server/worker.ts",
+    "build": "bun run typecheck && bunx --bun vp build",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test tests/domain.test.ts tests/resilience.test.ts tests/contracts.test.ts tests/http.test.ts",
+    "test:integration": "bun test tests/integration.test.ts",
+    "db:migrate": "bun src/server/migrate.ts",
+    "db:seed": "bun src/server/seed.ts",
+    "start": "bun src/server/index.ts",
+    "setup": "bun scripts/setup.ts",
+    "dev:full": "bun scripts/dev.ts",
+    "test:prepare": "bun scripts/prepare-tests.ts",
+    "benchmark": "bun scripts/benchmark.ts",
+    "check": "bunx --bun vp check && bun run deadcode && bun run test",
+    "lint": "bunx --bun vp lint --deny-warnings",
+    "format": "bunx --bun vp fmt",
+    "format:check": "bunx --bun vp fmt --check",
+    "verify": "bun run check && bun run build && bun run test:integration",
+    "dev:sandbox": "VITE_API_MODE=sandbox bun run dev",
+    "deadcode": "bunx --bun knip",
+    "audit": "bun audit"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.13",
+    "ioredis": "^6.0.0",
+    "lucide-react": "^1.57.0",
+    "postgres": "^3.4.9",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "knip": "6.41.0",
+    "typescript": "^7.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.2.0",
+    "vite-plus": "1.2.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.2.0"
+  },
+  "engines": {
+    "bun": ">=1.4.2"
+  },
+  "packageManager": "bun@1.4.3"
+}

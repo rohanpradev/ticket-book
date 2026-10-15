@@ -1,0 +1,49 @@
+name: Verify Rush
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: rush
+          POSTGRES_PASSWORD: rush_local
+          POSTGRES_DB: rush
+        ports: ['54329:5432']
+        options: >-
+          --health-cmd "pg_isready -U rush"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:8-alpine
+        ports: ['63799:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.3'
+      - run: bun install --frozen-lockfile
+      - run: bun run audit
+      - run: bun run check
+      - run: bun run build
+      - run: bun run test:prepare
+      - run: bun run test:integration
+      - run: bun run benchmark
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: benchmark-${{ github.sha }}
+          path: docs/benchmarks/latest.json

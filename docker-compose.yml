@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: rush
+      POSTGRES_PASSWORD: rush_local
+      POSTGRES_DB: rush
+    ports: ['127.0.0.1:54329:5432']
+    volumes: ['rush_pg:/var/lib/postgresql']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rush']
+      interval: 3s
+      retries: 20
+  redis:
+    image: redis:8-alpine
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
+    ports: ['127.0.0.1:63799:6379']
+    volumes: ['rush_redis:/data']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      retries: 20
+  migrate:
+    profiles: [full]
+    build: .
+    image: rush-local:2
+    env_file: .env
+    environment: &app-env
+      DATABASE_URL: postgres://rush:rush_local@postgres:5432/rush
+      REDIS_URL: redis://redis:6379
+      HOST: 0.0.0.0
+      APP_ORIGIN: http://127.0.0.1:8080
+    command: ['sh', '-c', 'bun run db:migrate && bun run db:seed']
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  api: &api
+    profiles: [full]
+    image: rush-local:2
+    env_file: .env
+    environment:
+      <<: *app-env
+      INSTANCE_ID: api-1
+    ports: ['127.0.0.1:3001:3001']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'bun',
+          '-e',
+          "process.exit((await fetch('http://127.0.0.1:3001/api/health/ready')).ok?0:1)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    init: true
+  api2:
+    <<: *api
+    environment:
+      <<: *app-env
+      INSTANCE_ID: api-2
+    ports: ['127.0.0.1:3002:3001']
+  worker:
+    profiles: [full]
+    image: rush-local:2
+    env_file: .env
+    environment:
+      <<: *app-env
+      INSTANCE_ID: worker-1
+    command: ['bun', 'src/server/worker.ts']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+    init: true
+  gateway:
+    profiles: [full]
+    image: nginx:1.29-alpine
+    ports: ['127.0.0.1:8080:8080']
+    volumes: ['./deploy/nginx.conf:/etc/nginx/nginx.conf:ro']
+    depends_on:
+      api: { condition: service_healthy }
+      api2: { condition: service_healthy }
+volumes:
+  rush_pg:
+  rush_redis:

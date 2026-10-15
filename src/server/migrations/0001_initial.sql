@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS orders(id text PRIMARY KEY,session_id text NOT NULL,idempotency_key text NOT NULL,seat_ids jsonb NOT NULL,amount integer NOT NULL CHECK(amount>=0),status text NOT NULL CHECK(status IN ('held','confirmed','expired','refund_pending','refunded')),created_at timestamptz NOT NULL DEFAULT now(),expires_at timestamptz NOT NULL,CONSTRAINT orders_session_key UNIQUE(session_id,idempotency_key));
+CREATE INDEX IF NOT EXISTS orders_expiry ON orders(status,expires_at);
+CREATE TABLE IF NOT EXISTS seats(id text PRIMARY KEY,row text NOT NULL,number integer NOT NULL,zone text NOT NULL,price integer NOT NULL CHECK(price>=0),status text NOT NULL DEFAULT 'available' CHECK(status IN ('available','held','sold')),booking_id text REFERENCES orders(id),expires_at timestamptz,CHECK((status='available' AND booking_id IS NULL AND expires_at IS NULL) OR (status='held' AND booking_id IS NOT NULL AND expires_at IS NOT NULL) OR (status='sold' AND booking_id IS NOT NULL AND expires_at IS NULL)));
+CREATE TABLE IF NOT EXISTS outbox(id text PRIMARY KEY,order_id text NOT NULL REFERENCES orders(id),kind text NOT NULL,attempts integer NOT NULL DEFAULT 0,created_at timestamptz NOT NULL DEFAULT now(),processed_at timestamptz,available_at timestamptz NOT NULL DEFAULT now(),failed boolean NOT NULL DEFAULT false);
+CREATE INDEX IF NOT EXISTS outbox_ready ON outbox(available_at) WHERE processed_at IS NULL AND failed=false;
+CREATE TABLE IF NOT EXISTS audits(id text PRIMARY KEY,at timestamptz NOT NULL DEFAULT now(),type text NOT NULL,message text NOT NULL,order_id text);
+CREATE TABLE IF NOT EXISTS admissions(session_id text PRIMARY KEY,expires_at timestamptz NOT NULL);
+CREATE TABLE IF NOT EXISTS payment_events(id text PRIMARY KEY,order_id text NOT NULL REFERENCES orders(id),received_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS lab_flags(id boolean PRIMARY KEY DEFAULT true CHECK(id),worker_paused boolean NOT NULL DEFAULT false,redis_down boolean NOT NULL DEFAULT false);
+INSERT INTO lab_flags(id) VALUES(true) ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS deliveries(id text PRIMARY KEY,order_id text NOT NULL,kind text NOT NULL,delivered_at timestamptz NOT NULL DEFAULT now());
