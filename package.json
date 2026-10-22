@@ -32,7 +32,7 @@
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
     "ioredis": "^6.0.0",
-    "lucide-react": "^1.57.0",
+    "lucide-react": "^1.59.0",
     "postgres": "^3.4.9",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
@@ -43,10 +43,10 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
-    "knip": "6.41.0",
+    "knip": "6.42.1",
     "typescript": "^7.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.2.0",
-    "vite-plus": "1.2.0"
+    "vite-plus": "1.3.0"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@1.2.0"
