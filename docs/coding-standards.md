@@ -12,7 +12,7 @@ These rules apply to Rush's actual failure model. They are enforced by configura
 | Type correctness             | Strict TypeScript; checked indexed access; exact optional properties; unused locals/parameters; switch fallthrough; consistent import casing; explicit type imports |
 | Runtime contracts            | Shared Zod schemas derive browser types and validate success payloads and persisted sandbox snapshots                                                               |
 | No assertion escapes         | `no-explicit-any` and `no-non-null-assertion`; narrow unknown values and check required results                                                                     |
-| Unused code and dependencies | Knip 6.41, including explicit process-fixture entry points; unused exports are kept local                                                                           |
+| Unused code and dependencies | Knip 6.42, including explicit process-fixture entry points; unused exports are kept local                                                                           |
 | CI supply chain              | Actions pinned to verified full commit SHAs; Dependabot proposes weekly action updates                                                                              |
 | Promise ownership            | Type-aware `no-floating-promises`; await work, return it, or explicitly use `void` only when rejection is handled                                                   |
 | React correctness            | Hook order, effect dependencies, render purity, and compiler correctness rules                                                                                      |
@@ -36,6 +36,8 @@ Use comments to explain why an invariant, lock order, recovery step, or deadline
 ## Tooling decisions
 
 Vite+ owns formatting, linting, and type checks. Bun owns application execution and tests. Knip checks reachability and dependency use, which are different from local lint rules; its Vite+ plugin discovers the build configuration. Declare files spawned as subprocesses as entry points instead of suppressing their unused-file findings. Keep advisory checks separate from the offline developer check because they require the registry.
+
+Upgrade `vite-plus`, the `vite` npm alias, and `overrides.vite` to the same exact Vite+ release, then regenerate the Bun lockfile. Dependabot's Bun updater can leave the alias and override behind even in a grouped update; inspect all three entries before accepting a toolchain upgrade. Keep CodeQL's `init` and `analyze` actions on the same commit; their Dependabot updates are grouped. CI removes the saved benchmark before measuring and uploads only a report from a benchmark that actually ran, including failed measurements.
 
 Shared response schemas are the source of browser-facing types. Parse unknown data before it enters React state. Additive response fields are accepted and stripped by the parser; missing required fields, illegal states, invalid timestamps, and invalid money values fail with a controlled connection error. HTTP status codes remain available on `HttpError`, including protocol failures returned with status 200. Do not automatically retry mutations with a new idempotency key.
 

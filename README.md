@@ -9,7 +9,7 @@ Rush combines a React concert-booking experience with a Bun/Hono API, PostgreSQL
 
 ## Start locally
 
-Use Bun 1.4.3 and Docker. Node 26.3.0 is pinned for developers who use the Node-based Vite+ CLI; project scripts invoke the local CLI through Bun.
+Use Bun 1.4.4 and Docker. Node 26.12.1 is pinned for developers who use the Node-based Vite+ CLI; project scripts invoke the local CLI through Bun.
 
 ```sh
 bun install --frozen-lockfile
@@ -45,7 +45,7 @@ Open `http://127.0.0.1:8080`. Host development and the full container profile bo
 | Live updates          | Transactional PostgreSQL notifications; coalesced SSE; snapshot reconciliation                | Cross-process invalidation test                                  |
 | Observability         | Structured logs; W3C trace correlation; Prometheus histograms; worker heartbeats; backlog age | Route-template labels and trace-to-outbox assertions             |
 | Schema delivery       | Ordered SQL migrations, checksums, migration lock                                             | Rerunnable migrations; changed checksums fail                    |
-| Engineering workflow  | Vite+ 1.2, Oxfmt, type-aware Oxlint, strict TypeScript, Knip, shared Zod contracts, CI        | `bun run check`, production build, integration suite             |
+| Engineering workflow  | Vite+ 1.4, Oxfmt, type-aware Oxlint, strict TypeScript, Knip, shared Zod contracts, CI        | `bun run check`, production build, integration suite             |
 
 ## Verify and measure
 

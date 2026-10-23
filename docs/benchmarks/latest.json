@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-10-15T06:06:13.956Z",
+  "generatedAt": "2026-10-23T09:13:21.148Z",
   "scope": "Local HTTP benchmark: two Bun API processes, PostgreSQL and Redis; direct round-robin requests, no TLS or proxy. Isolated fixture, not a production capacity claim.",
   "environment": {
-    "bun": "1.4.2",
+    "bun": "1.4.4",
     "os": "darwin",
     "arch": "arm64",
     "cpu": "Apple M3 Pro",
@@ -17,10 +17,10 @@
       "name": "Last-seat contention",
       "requests": 100,
       "concurrency": 100,
-      "durationMs": 54.47,
-      "p50Ms": 7.56,
-      "p95Ms": 53.34,
-      "p99Ms": 54.07,
+      "durationMs": 58.39,
+      "p50Ms": 6.55,
+      "p95Ms": 57.61,
+      "p99Ms": 58.06,
       "statuses": {
         "201": 1,
         "409": 47,
@@ -32,10 +32,10 @@
       "name": "Idempotent replay across replicas",
       "requests": 40,
       "concurrency": 40,
-      "durationMs": 5.85,
-      "p50Ms": 4.73,
-      "p95Ms": 5.63,
-      "p99Ms": 5.69,
+      "durationMs": 4.7,
+      "p50Ms": 3.85,
+      "p95Ms": 4.25,
+      "p99Ms": 4.57,
       "statuses": {
         "200": 40
       },
@@ -45,10 +45,10 @@
       "name": "Duplicate checkout",
       "requests": 24,
       "concurrency": 24,
-      "durationMs": 26.31,
-      "p50Ms": 19.92,
-      "p95Ms": 25.92,
-      "p99Ms": 26.12,
+      "durationMs": 25.37,
+      "p50Ms": 18.86,
+      "p95Ms": 24.6,
+      "p99Ms": 25.25,
       "statuses": {
         "200": 24
       },

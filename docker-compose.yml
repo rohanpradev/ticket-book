@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18-alpine
+    image: postgres:18.6-alpine
     environment:
       POSTGRES_USER: rush
       POSTGRES_PASSWORD: rush_local
@@ -12,7 +12,7 @@ services:
       interval: 3s
       retries: 20
   redis:
-    image: redis:8-alpine
+    image: redis:8.10.2-alpine
     command: ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
     ports: ['127.0.0.1:63799:6379']
     volumes: ['rush_redis:/data']
@@ -77,7 +77,7 @@ services:
     init: true
   gateway:
     profiles: [full]
-    image: nginx:1.29-alpine
+    image: nginx:1.30.6-alpine
     ports: ['127.0.0.1:8080:8080']
     volumes: ['./deploy/nginx.conf:/etc/nginx/nginx.conf:ro']
     depends_on:
