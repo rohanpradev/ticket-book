@@ -503,6 +503,116 @@ describe('PostgreSQL + Redis integration', () => {
       await provider.stop(true);
     }
   });
+  test('HTTP delivery deadlines retry the same confirmation after an unknown outcome', async () => {
+    const order = await reserve('http-deadline', ['B9'], crypto.randomUUID());
+    await payment(order.id, 'http-deadline-payment');
+    const [pending] = await sql<{ id: string }[]>`SELECT id FROM outbox WHERE order_id=${order.id}`;
+    assert(pending);
+    const attempts: { key: string; eventId: string; claimToken: string }[] = [];
+    const effects = new Set<string>();
+    let releaseResponse = () => {};
+    const withheldResponse = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+    let respond = false;
+    const provider = Bun.serve({
+      hostname: '127.0.0.1',
+      port: 0,
+      fetch: async (request) => {
+        const key = request.headers.get('idempotency-key');
+        assert(key);
+        const body: unknown = await request.json();
+        assert(
+          body !== null &&
+            typeof body === 'object' &&
+            'eventId' in body &&
+            typeof body.eventId === 'string',
+        );
+        const [claim] = await sql<{ claim_token: string | null }[]>`
+          SELECT claim_token FROM outbox WHERE id=${key}`;
+        assert(claim && typeof claim.claim_token === 'string');
+        attempts.push({ key, eventId: body.eventId, claimToken: claim.claim_token });
+        // The provider commits once, but its response can be lost before the worker sees it.
+        effects.add(key);
+        if (!respond) await withheldResponse;
+        return Response.json({ ok: true });
+      },
+    });
+    const oldUrl = process.env.DELIVERY_URL;
+    process.env.DELIVERY_URL = String(provider.url);
+    // A broken client deadline must fail the test without leaving a hung request behind.
+    const watchdog = setTimeout(releaseResponse, 6000);
+    try {
+      const started = performance.now();
+      expect(await drainOutbox()).toBe(0);
+      const elapsed = performance.now() - started;
+      expect(elapsed).toBeGreaterThanOrEqual(2800);
+      expect(elapsed).toBeLessThan(5000);
+      const [retry] = await sql<
+        {
+          attempts: number;
+          failed: boolean;
+          processed_at: Date | null;
+          claim_token: string | null;
+          lease_until: Date | null;
+          last_error: string | null;
+          retry_scheduled: boolean;
+        }[]
+      >`SELECT attempts,failed,processed_at,claim_token,lease_until,last_error,
+          EXISTS (SELECT 1 FROM audits WHERE order_id=${order.id} AND type='delivery_retry'
+            AND at<=outbox.available_at AND outbox.available_at<=at+interval '3 seconds') AS retry_scheduled
+        FROM outbox WHERE id=${pending.id}`;
+      assert(retry);
+      expect(retry.attempts).toBe(1);
+      expect(retry.failed).toBe(false);
+      expect(retry.processed_at).toBeNull();
+      expect(retry.claim_token).toBeNull();
+      expect(retry.lease_until).toBeNull();
+      expect(retry.last_error).toContain('timed out');
+      expect(retry.retry_scheduled).toBe(true);
+      expect(attempts).toHaveLength(1);
+
+      respond = true;
+      releaseResponse();
+      await sql`UPDATE outbox SET available_at=clock_timestamp() WHERE id=${pending.id}`;
+      expect(await drainOutbox()).toBe(1);
+      expect(await drainOutbox()).toBe(0);
+      expect(attempts.map(({ key, eventId }) => ({ key, eventId }))).toEqual([
+        { key: pending.id, eventId: pending.id },
+        { key: pending.id, eventId: pending.id },
+      ]);
+      const first = attempts[0],
+        second = attempts[1];
+      assert(first && second);
+      expect(second.claimToken).not.toBe(first.claimToken);
+      expect(effects).toEqual(new Set([pending.id]));
+      const [completed] = await sql<
+        { attempts: number; processed: boolean; unclaimed: boolean; cleared_error: boolean }[]
+      >`SELECT attempts,processed_at IS NOT NULL AS processed,
+          claim_token IS NULL AND lease_until IS NULL AS unclaimed,last_error IS NULL AS cleared_error
+        FROM outbox WHERE id=${pending.id}`;
+      expect(completed).toEqual({
+        attempts: 2,
+        processed: true,
+        unclaimed: true,
+        cleared_error: true,
+      });
+      const [state] = await sql<
+        { status: string; confirmations: number; payment_effects: number; sold: number }[]
+      >`SELECT status,
+          (SELECT count(*)::int FROM outbox WHERE order_id=orders.id AND kind='confirmation') AS confirmations,
+          (SELECT count(*)::int FROM audits WHERE order_id=orders.id AND type='confirmed') AS payment_effects,
+          (SELECT count(*)::int FROM seats WHERE booking_id=orders.id AND status='sold') AS sold
+        FROM orders WHERE id=${order.id}`;
+      expect(state).toEqual({ status: 'confirmed', confirmations: 1, payment_effects: 1, sold: 1 });
+    } finally {
+      clearTimeout(watchdog);
+      releaseResponse();
+      if (oldUrl) process.env.DELIVERY_URL = oldUrl;
+      else delete process.env.DELIVERY_URL;
+      await provider.stop(true);
+    }
+  }, 10000);
   test('a slow sink holds no queue transaction and another worker makes progress', async () => {
     const first = await reserve('slow', ['B7'], crypto.randomUUID());
     await payment(first.id, 'slow-payment');

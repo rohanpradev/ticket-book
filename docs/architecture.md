@@ -94,7 +94,7 @@ These defaults are starting points measured by the local fixture, not universal 
 
 ## ADR 008: One frontend toolchain
 
-Vite+ 1.2 owns development/build commands, Oxfmt, Oxlint, and type-aware checks. The root configuration defines the policy. Bun remains the application and test runtime because integration fixtures deliberately spawn and terminate Bun processes. No second formatter, linter, or unit-test runtime is required.
+Vite+ 1.4 owns development/build commands, Oxfmt, Oxlint, and type-aware checks. The root configuration defines the policy. Bun remains the application and test runtime because integration fixtures deliberately spawn and terminate Bun processes. No second formatter, linter, or unit-test runtime is required.
 
 ## ADR 009 — Validate data at the browser boundary
 
