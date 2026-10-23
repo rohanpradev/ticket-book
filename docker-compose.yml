@@ -77,7 +77,7 @@ services:
     init: true
   gateway:
     profiles: [full]
-    image: nginx:1.30.6-alpine
+    image: nginx:1.31.0-alpine
     ports: ['127.0.0.1:8080:8080']
     volumes: ['./deploy/nginx.conf:/etc/nginx/nginx.conf:ro']
     depends_on:
