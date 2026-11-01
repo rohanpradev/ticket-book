@@ -79,10 +79,8 @@ src/web/                  Booking, operations, architecture, experiment runner
 
 - [Architecture and decisions](docs/architecture.md)
 - [Coding standards](docs/coding-standards.md)
-- [Interview walkthrough](docs/interview-guide.md)
 - [Operations runbook](docs/runbook.md)
 - [API contract](docs/api.md)
-- [Research and primary sources](docs/research.md)
 - [Latest benchmark evidence](docs/benchmarks/latest.json)
 
 ## Explicit boundaries
