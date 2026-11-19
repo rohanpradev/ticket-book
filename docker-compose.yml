@@ -12,7 +12,7 @@ services:
       interval: 3s
       retries: 20
   redis:
-    image: redis:8.10.2-alpine
+    image: redis:8.10.3-alpine
     command: ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
     ports: ['127.0.0.1:63799:6379']
     volumes: ['rush_redis:/data']
